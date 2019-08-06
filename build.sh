@@ -171,6 +171,8 @@ tar -C "$WORK" -xjf download/gnupg-$GNUPG_VERSION.tar.bz2
         --with-libassuan-prefix="$WORK/deps" \
         --with-ksba-prefix="$WORK/deps" \
         --with-npth-prefix="$WORK/deps" \
+        --with-agent-pgm="$PREFIX/bin/gpg-agent" \
+        --with-pinentry-pgm="$PREFIX/bin/pinentry" \
         --disable-bzip2 \
         --disable-card-support \
         --disable-ccid-driver \

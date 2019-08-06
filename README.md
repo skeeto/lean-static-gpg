@@ -21,6 +21,14 @@ individual package versions up to date.
 Note: Since binaries are statically linked, some memory safety security
 features are disabled, such as ASLR.
 
+## GnuPG Bugs
+
+GnuPG has a bug where it will use `/usr/bin/gpg-agent` instead of the
+gpg-agent built by the script, *despite being told explicitly to use the
+local version*. If there's a system-installed GnuPG, you're likely to
+see "WARNING: server 'gpg-agent' is older than us". Until this is fixed,
+either ignore the warning or uninstall the system's GnuPG.
+
 ## Usage
 
     $ ./build.sh
