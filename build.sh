@@ -14,6 +14,7 @@ PINENTRY_VERSION=1.1.1
 DESTDIR=
 PREFIX="$PWD/gnupg"
 WORK="$PWD/work"
+PATH="$PWD/work/deps/bin:$PATH"
 NJOBS=$(nproc)
 
 usage() {
