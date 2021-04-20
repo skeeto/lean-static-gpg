@@ -178,7 +178,6 @@ tar -C "$WORK" -xjf download/gnupg-$GNUPG_VERSION.tar.bz2
         --disable-card-support \
         --disable-ccid-driver \
         --disable-dirmngr \
-        --disable-doc \
         --disable-gnutls \
         --disable-gpg-blowfish \
         --disable-gpg-cast5 \
