@@ -56,7 +56,7 @@ EOF
 checkGCC() {
 	if ! echo 'int main(){}' > "$WORK/dummy.c" || ! $GCC -o "$WORK/dummy" "$WORK/dummy.c" &> /dev/null || ! [[ -x "$WORK/dummy" ]]; then
 		echo "GCC unusable!"
-		#rm "$WORK/dummy" "$WORK/dummy.c" &> /dev/null
+		rm "$WORK/dummy" "$WORK/dummy.c" &> /dev/null
 		exit;
 	else
 		echo "GCC usable!"
