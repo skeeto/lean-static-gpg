@@ -16,10 +16,11 @@ PREFIX="$PWD/gnupg"
 WORK="$PWD/work"
 PATH="$PWD/work/deps/bin:$PATH"
 NJOBS=$(nproc)
+GCC=
 
 usage() {
     cat <<EOF
-usage: $0 [-Cch] [-d destdir] [-j njobs] [-p prefix]
+usage: $0 [-Cch] [-d destdir] [-j njobs] [-p prefix] [-g /path/to/gcc/binary]
   -C         clean all build files including downloads
   -c         clean build files, preserving downloads
   -h         print this help message
@@ -52,14 +53,25 @@ $gnupgweb/pinentry/pinentry-$PINENTRY_VERSION.tar.bz2
 EOF
     )
 }
+checkGCC() {
+	if ! echo 'int main(){}' > "$WORK/dummy.c" || ! $GCC -o "$WORK/dummy" "$WORK/dummy.c" &> /dev/null || ! [[ -x "$WORK/dummy" ]]; then
+		echo "GCC unusable!"
+		rm "$WORK/dummy" "$WORK/dummy.c" &> /dev/null
+		exit;
+	else
+		echo "GCC usable!"
+		rm "$WORK/dummy" "$WORK/dummy.c" &> /dev/null
+	fi
+}
 
-while getopts cCDd:j:hp: name
+while getopts cCDd:j:hp:g: name
 do
     case $name in
     c) clean; exit 0;;
     C) distclean; exit 0;;
     D) download; exit 0;;
     h) usage; exit 0;;
+    g) GCC="$OPTARG";;
     j) NJOBS="$OPTARG";;
     p) PREFIX="$OPTARG";;
     d) DESTDIR="$OPTARG";;
@@ -74,25 +86,28 @@ if [ ! -d download/ ]; then
 fi
 
 mkdir -p "$DESTDIR$PREFIX" "$WORK/deps"
-
-tar -C "$WORK" -xzf download/musl-$MUSL_VERSION.tar.gz
-(
-    mkdir -p "$WORK/musl"
-    cd "$WORK/musl"
-    ../musl-$MUSL_VERSION/configure \
-        --prefix="$WORK/deps" \
-        --enable-wrapper=gcc \
-        --syslibdir="$WORK/deps/lib"
-    make -kj$NJOBS
-    make install
-)
+if [ -z "$GCC" ];then
+	tar -C "$WORK" -xzf download/musl-$MUSL_VERSION.tar.gz
+	(
+    		mkdir -p "$WORK/musl"
+    		cd "$WORK/musl"
+    		../musl-$MUSL_VERSION/configure \
+        		--prefix="$WORK/deps" \
+        		--enable-wrapper=gcc \
+        		--syslibdir="$WORK/deps/lib"
+    		make -kj$NJOBS
+    		make install
+	)
+	GCC="$WORK/deps/bin/musl-gcc"
+fi
+checkGCC;
 
 tar -C "$WORK" -xjf download/npth-$NPTH_VERSION.tar.bz2
 (
     mkdir -p "$WORK/npth"
     cd "$WORK/npth"
     ../npth-$NPTH_VERSION/configure \
-        CC="$WORK/deps/bin/musl-gcc" \
+        CC="$GCC" \
         --prefix="$WORK/deps" \
         --enable-shared=no \
         --enable-static=yes
@@ -105,7 +120,7 @@ tar -C "$WORK" -xjf download/libgpg-error-$LIBGPGERROR_VERSION.tar.bz2
     mkdir -p "$WORK/libgpg-error"
     cd "$WORK/libgpg-error"
     ../libgpg-error-$LIBGPGERROR_VERSION/configure \
-        CC="$WORK/deps/bin/musl-gcc" \
+        CC="$GCC" \
         --prefix="$WORK/deps" \
         --enable-shared=no \
         --enable-static=yes \
@@ -121,7 +136,7 @@ tar -C "$WORK" -xjf download/libassuan-$LIBASSUAN_VERSION.tar.bz2
     mkdir -p "$WORK/libassuan"
     cd "$WORK/libassuan"
     ../libassuan-$LIBASSUAN_VERSION/configure \
-        CC="$WORK/deps/bin/musl-gcc" \
+        CC="$GCC" \
         --prefix="$WORK/deps" \
         --enable-shared=no \
         --enable-static=yes \
@@ -135,7 +150,7 @@ tar -C "$WORK" -xjf download/libgcrypt-$LIBGCRYPT_VERSION.tar.bz2
     mkdir -p "$WORK/libgcrypt"
     cd "$WORK/libgcrypt"
     ../libgcrypt-$LIBGCRYPT_VERSION/configure \
-        CC="$WORK/deps/bin/musl-gcc" \
+        CC="$GCC" \
         --prefix="$WORK/deps" \
         --enable-shared=no \
         --enable-static=yes \
@@ -150,7 +165,7 @@ tar -C "$WORK" -xjf download/libksba-$LIBKSBA_VERSION.tar.bz2
     mkdir -p "$WORK/libksba"
     cd "$WORK/libksba"
     ../libksba-$LIBKSBA_VERSION/configure \
-        CC="$WORK/deps/bin/musl-gcc" \
+        CC="$GCC" \
         --prefix="$WORK/deps" \
         --enable-shared=no \
         --enable-static=yes \
@@ -164,7 +179,7 @@ tar -C "$WORK" -xjf download/gnupg-$GNUPG_VERSION.tar.bz2
     mkdir -p "$WORK/gnupg"
     cd "$WORK/gnupg"
     ../gnupg-$GNUPG_VERSION/configure \
-        CC="$WORK/deps/bin/musl-gcc" \
+        CC="$GCC" \
         LDFLAGS="-static -s" \
         --prefix="$PREFIX" \
         --with-libgpg-error-prefix="$WORK/deps" \
@@ -205,7 +220,7 @@ tar -C "$WORK" -xjf download/pinentry-$PINENTRY_VERSION.tar.bz2
     mkdir -p "$WORK/pinentry"
     cd "$WORK/pinentry"
     ../pinentry-$PINENTRY_VERSION/configure \
-        CC="$WORK/deps/bin/musl-gcc" \
+        CC="$GCC" \
         LDFLAGS="-static -s" \
         --prefix="$PREFIX" \
         --with-libgpg-error-prefix="$WORK/deps" \
