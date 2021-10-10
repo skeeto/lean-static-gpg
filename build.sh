@@ -6,10 +6,12 @@ MUSL_VERSION=1.2.2
 GNUPG_VERSION=2.3.1
 LIBASSUAN_VERSION=2.5.5
 LIBGCRYPT_VERSION=1.9.2
+NTBTLS_VERSION=0.2.0
 LIBGPGERROR_VERSION=1.42
 LIBKSBA_VERSION=1.5.1
 NPTH_VERSION=1.6
 PINENTRY_VERSION=1.1.1
+ZLIB_VERSION=1.2.11
 
 DESTDIR=
 PREFIX="$PWD/gnupg"
@@ -49,6 +51,8 @@ $gnupgweb/libgpg-error/libgpg-error-$LIBGPGERROR_VERSION.tar.bz2
 $gnupgweb/libksba/libksba-$LIBKSBA_VERSION.tar.bz2
 $gnupgweb/npth/npth-$NPTH_VERSION.tar.bz2
 $gnupgweb/pinentry/pinentry-$PINENTRY_VERSION.tar.bz2
+$gnupgweb/ntbtls/ntbtls-$NTBTLS_VERSION.tar.bz2
+https://zlib.net/zlib-$ZLIB_VERSION.tar.gz
 EOF
     )
 }
@@ -159,6 +163,34 @@ tar -C "$WORK" -xjf download/libksba-$LIBKSBA_VERSION.tar.bz2
     make install
 )
 
+tar -C "$WORK" -xzf download/zlib-$ZLIB_VERSION.tar.gz
+(
+    mkdir -p "$WORK/zlib"
+    cd "$WORK/zlib"
+    ../zlib-$ZLIB_VERSION/configure \
+        --prefix="$WORK/deps" \
+        --static
+    export CC="$WORK/deps/bin/musl-gcc"
+    make -kj$NJOBS
+    make install
+)
+
+tar -C "$WORK" -xjf download/ntbtls-$NTBTLS_VERSION.tar.bz2
+(
+    mkdir -p "$WORK/ntbtls"
+    cd "$WORK/ntbtls"
+    ../ntbtls-$NTBTLS_VERSION/configure \
+        CC="$WORK/deps/bin/musl-gcc" \
+        --prefix="$WORK/deps" \
+        --enable-shared=no \
+        --enable-static=yes \
+        --with-libgcrypt-prefix="$WORK/deps" \
+        --with-ksba-prefix="$WORK/deps" \
+        --with-zlib="$WORK/deps"
+    make -kj$NJOBS
+    make install
+)
+
 tar -C "$WORK" -xjf download/gnupg-$GNUPG_VERSION.tar.bz2
 (
     mkdir -p "$WORK/gnupg"
@@ -174,10 +206,10 @@ tar -C "$WORK" -xjf download/gnupg-$GNUPG_VERSION.tar.bz2
         --with-npth-prefix="$WORK/deps" \
         --with-agent-pgm="$PREFIX/bin/gpg-agent" \
         --with-pinentry-pgm="$PREFIX/bin/pinentry" \
+        --with-ntbtls-prefix="$WORK/deps" \
         --disable-bzip2 \
         --disable-card-support \
         --disable-ccid-driver \
-        --disable-dirmngr \
         --disable-gnutls \
         --disable-gpg-blowfish \
         --disable-gpg-cast5 \
@@ -188,7 +220,6 @@ tar -C "$WORK" -xjf download/gnupg-$GNUPG_VERSION.tar.bz2
         --disable-ldap \
         --disable-libdns \
         --disable-nls \
-        --disable-ntbtls \
         --disable-photo-viewers \
         --disable-regex \
         --disable-scdaemon \
