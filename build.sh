@@ -23,6 +23,7 @@ usage() {
 usage: $0 [-Cch] [-d destdir] [-j njobs] [-p prefix] [-g /path/to/gcc/binary]
   -C         clean all build files including downloads
   -c         clean build files, preserving downloads
+  -g         skip the building of the musl-gcc binary and use the specified custom gcc binary instead
   -h         print this help message
 EOF
 }
